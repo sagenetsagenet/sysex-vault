@@ -1,0 +1,10 @@
+{
+  "name": "sysex-clip-manager-device",
+  "version": "1.0.0",
+  "description": "Node-for-Max device for the SysEx Clip Manager (sysexin/midiout + tested src/ brain).",
+  "main": "sysex-device.js",
+  "scripts": {
+    "test": "echo \"tests live in ../test\" && exit 0"
+  },
+  "dependencies": {}
+}

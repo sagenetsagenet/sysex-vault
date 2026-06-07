@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+*.log
+
+# Node-for-Max scratch (max-api is provided by Max at runtime)
+device/node_modules/
+device/package-lock.json
+
+# The dump store lives in the user's Live Library, never in the repo
+dumps/
