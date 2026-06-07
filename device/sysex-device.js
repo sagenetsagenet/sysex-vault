@@ -28,6 +28,41 @@ let lastHash = null;        // most-recent dump (for the manual transmitlast but
 let pendingPark = null;     // { hash, byteSize, base } awaiting liveglue's "bars" reply
 let rx = null;              // F0..F7 accumulation buffer
 
+// ---- transmit speed (bytes/sec). Index from the UI live.tab. ---------------
+// 3125 B/s = full standard-MIDI bandwidth (31.25 kbaud / 10 bits per byte).
+const TX_RATES = [1562, 3125, 6250, 12500];   // VINTAGE ½× / STANDARD 1× / FAST 2× / TURBO 4×
+let txRate = 3125;                              // default = STANDARD
+
+function status(s) { Max.outlet("status", s); }
+
+// Split a byte stream into complete F0..F7 SysEx messages (a "dump" may be a bank
+// of several). Each must be sent WHOLE — splitting inside one corrupts it.
+function splitMessages(bytes) {
+  const msgs = []; let cur = null;
+  for (let i = 0; i < bytes.length; i++) {
+    const b = bytes[i] & 0xff;
+    if (b === 0xf0) cur = [0xf0];
+    else if (cur) cur.push(b);
+    if (b === 0xf7 && cur) { msgs.push(cur); cur = null; }
+  }
+  if (cur && cur.length) msgs.push(cur);        // tolerate an unterminated tail
+  return msgs;
+}
+
+// Send a dump paced to txRate: emit each COMPLETE message, then wait long enough
+// for it to clear at the chosen rate before the next. A single-message dump sends
+// in one piece (no delay), exactly like an un-throttled send.
+function sendThrottled(bytes) {
+  const msgs = splitMessages(bytes);
+  if (!msgs.length) return;
+  let i = 0;
+  (function next() {
+    const m = msgs[i++];
+    Max.outlet("sysex", ...m);                   // one complete F0..F7 -> [route] -> [midiout]
+    if (i < msgs.length) setTimeout(next, Math.max(1, (m.length / txRate) * 1000));
+  })();
+}
+
 // ---- capture ---------------------------------------------------------------
 function onByte(b) {
   b = b & 0xff;
@@ -41,16 +76,22 @@ function onByte(b) {
   }
 }
 
+// Kick off the park flow: ask liveglue for set-wide bars; onBars makes the clip.
+function park(hash, byteSize, base) {
+  pendingPark = { hash, byteSize, base: base || "SysEx" };
+  Max.outlet("needbars");                                     // -> liveglue gathers set-wide bars
+  Max.post(`[sysex] parking… (gathering bars)`);
+}
+
 function finishReceive(bytes) {
   const info = sysex.identifyDump(bytes);
   const r = store.put(STORE_DIR, bytes);
   lastHash = r.hash;
   Max.post(`[sysex] received ${bytes.length} bytes — ${info.manufacturerShort} ${info.patchName || ""} -> dump ${r.hash}${r.deduped ? " (dedupe)" : ""}`);
-  if (armed) {
+  status("RX " + (info.patchName || info.manufacturerShort || r.hash));
+  if (armed) {                                                 // received dumps only park when armed
     armed = false;
-    pendingPark = { hash: r.hash, byteSize: bytes.length, base: info.patchName || info.manufacturerShort || "SysEx" };
-    Max.outlet("needbars");                                   // -> liveglue gathers set-wide bars
-    Max.post(`[sysex] parking… (gathering bars)`);
+    park(r.hash, bytes.length, info.patchName || info.manufacturerShort);
   }
 }
 
@@ -62,6 +103,7 @@ function onBars(...bars) {
   const name = pendingPark.base + " " + identity.makeTag(uuid, pendingPark.hash);
   Max.outlet("createclip", bar, name);                        // -> liveglue creates+names the clip
   Max.post(`[sysex] parking dump ${pendingPark.hash} at bar ${bar} as "${name}"`);
+  status("PARKED bar " + bar);
   pendingPark = null;
 }
 
@@ -72,26 +114,46 @@ function onLaunch(...parts) {
   if (!hash) { Max.post(`[sysex] launch: clip has no dump ref (${clipName})`); return; }
   const bytes = store.get(STORE_DIR, hash);
   if (!bytes) { Max.post(`[sysex] launch: dump ${hash} not in store`); return; }
-  Max.outlet("sysex", ...bytes);                              // -> [route sysex] -> [midiout] (downstream)
-  Max.post(`[sysex] sent dump ${hash} (clip "${clipName}")`);
+  sendThrottled(bytes);                                       // paced to txRate -> [midiout] downstream
+  Max.post(`[sysex] sent dump ${hash} @ ${txRate} B/s (clip "${clipName}")`);
+  status("SENT " + hash);
 }
 
 // ---- handlers --------------------------------------------------------------
 Max.addHandler("byte", onByte);
 Max.addHandler("bars", onBars);
 Max.addHandler("launch", onLaunch);
-Max.addHandler("arm", () => { armed = true; rx = null; Max.post("[sysex] ARMED — send a dump from the synth"); });
-Max.addHandler("disarm", () => { armed = false; Max.post("[sysex] disarmed"); });
+Max.addHandler("arm", () => { armed = true; rx = null; Max.post("[sysex] ARMED — send a dump from the synth"); status("ARMED"); });
+Max.addHandler("disarm", () => { armed = false; Max.post("[sysex] disarmed"); status("IDLE"); });
+Max.addHandler("speed", (idx) => {
+  txRate = TX_RATES[idx | 0] || 3125;
+  Max.post(`[sysex] tx speed = ${txRate} B/s`);
+  status("SPEED " + txRate);
+});
+// EXPORT the last buffer (most-recent captured/imported dump) to a .syx file.
+Max.addHandler("exportlast", (filePath) => {
+  if (!filePath || filePath === "cancel") return;
+  if (!lastHash) { Max.post("[sysex] export: nothing in the buffer yet"); status("NO BUFFER"); return; }
+  const bytes = store.get(STORE_DIR, lastHash);
+  if (!bytes) return Max.post(`[sysex] export: dump ${lastHash} missing`);
+  let p = String(filePath);
+  if (!/\.syx$/i.test(p)) p += ".syx";
+  try { fs.writeFileSync(p, Buffer.from(bytes)); Max.post(`[sysex] exported ${lastHash} -> ${p}`); status("EXPORTED " + lastHash); }
+  catch (e) { Max.post(`[sysex] export failed: ${e}`); }
+});
 
 // manual ops (UI / debugging)
-Max.addHandler("import", (filePath, base) => {
+// IMPORT a .syx -> store it AND park a clip (importing is explicit, so always parks).
+Max.addHandler("import", (filePath) => {
   try {
+    if (!filePath || filePath === "cancel") return;
     const bytes = Array.prototype.slice.call(fs.readFileSync(filePath));
     const info = sysex.identifyDump(bytes);
     const r = store.put(STORE_DIR, bytes);
     lastHash = r.hash;
     Max.post(`[sysex] imported ${info.manufacturerShort} ${info.patchName || ""} (${bytes.length} b) -> dump ${r.hash}${r.deduped ? " (dedupe)" : ""}`);
-    Max.outlet("imported", r.hash, info.patchName || info.manufacturerShort);
+    status("IMPORT " + (info.patchName || r.hash));
+    park(r.hash, bytes.length, info.patchName || info.manufacturerShort || "Import");
   } catch (e) { Max.post(`[sysex] import failed: ${e}`); }
 });
 Max.addHandler("export", (hash, filePath) => {
@@ -114,7 +176,9 @@ Max.addHandler("list", () => {
     return { hash: h, mfr: info.manufacturerShort, patch: info.patchName, bytes: bytes ? bytes.length : 0 };
   });
   Max.post(`[sysex] store: ${rows.length} dump(s) at ${STORE_DIR}`);
+  rows.forEach((r) => Max.post(`   ${r.hash}  ${r.mfr || "?"}  ${r.patch || "-"}  ${r.bytes}b`));
   Max.outlet("list", JSON.stringify(rows));
+  status("LIB " + rows.length + " dumps");
 });
 
 // duplicate reconciliation: liveglue writes Dict "reconcileClips" then sends "reconcile".
@@ -139,4 +203,6 @@ Max.addHandler("reconcile", async () => {
 });
 
 store.ensureDir(STORE_DIR);
-Max.post(`[sysex] device ready — store ${STORE_DIR} (${store.list(STORE_DIR).length} dump(s))`);
+const nDumps = store.list(STORE_DIR).length;
+Max.post(`[sysex] device ready — store ${STORE_DIR} (${nDumps} dump(s))`);
+status("READY " + nDumps);
