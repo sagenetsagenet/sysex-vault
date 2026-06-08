@@ -1,6 +1,6 @@
 "use strict";
 // ============================================================================
-// Content-addressed dump store  —  SysEx Clip Manager
+// Content-addressed dump store  —  Sysex Vault
 //
 // Dumps live as plain .syx files on disk, named by their content hash:
 //     <baseDir>/<hash>.syx

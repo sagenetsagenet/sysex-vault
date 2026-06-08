@@ -1,6 +1,6 @@
 "use strict";
 // ============================================================================
-// SysEx parser + MIDI Manufacturer ID table  —  SysEx Clip Manager
+// SysEx parser + MIDI Manufacturer ID table  —  Sysex Vault
 //
 // Pure logic, no runtime deps (loads the generated manufacturers table),
 // Node-for-Max compatible (CommonJS). Verified by test/sysex.test.js.

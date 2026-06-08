@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate sysex-clip-manager.amxd — PER-TRACK SysEx Clip Manager.
+Generate "Sysex Vault.amxd" — PER-TRACK SysEx patch manager (formerly "SysEx Clip Manager").
 
 Dark cyber-industrial presentation: graphite surfaces, cyan primary accent,
 sparing violet — a premium MIDI/SysEx editor look (Elektron Transfer / Sequential
@@ -146,68 +146,59 @@ def hdr(text, x, y, w):
 
 # ============================ PRESENTATION (the UI) ==========================
 # Faithful reproduction of the "Sysex Control" dashboard mockup, COMPACTED to fit
-# the M4L device window (was 600x396, clipped at the bottom; now ~596x290).
-# NOTE: the byte builder / editor, preset manager, device-info, and send/request/
-# receive cards are PLACEHOLDER visuals (NOT wired). The real functional controls
-# are created afterward with presentation=0 (hidden but still fully connected),
-# to be mapped onto this layout in a later wiring pass.
-W, H = 596, 290
+# the M4L device window height (~176px usable). Device Info moved into the right
+# column to relieve the center stack. NOTE: the byte builder / editor, preset
+# manager, device-info, and send/request/receive cards are PLACEHOLDER visuals
+# (NOT wired). The real functional controls are created afterward with
+# presentation=0 (hidden but still fully connected), for a later wiring pass.
+W, H = 596, 176
 panel(0, 0, W, H, BG, rounded=12, border=1, bordercolor=BTNBORD)        # window
 
-# --- header bar ---
-label("✈", 14, 9, 18, 18, CYAN, 13, "Arial", 1)
-label("Sysex Vault", 34, 10, 220, 16, TXT, 12, "Arial Bold", 0)
-label("⟳    ⚙    ⤓", 468, 11, 114, 14, TXT3, 11, "Arial", 2)
-panel(14, 32, W - 28, 1, BTNBORD)                                      # header divider
+# --- header bar (tight gap to divider) ---
+label("✈", 14, 6, 16, 16, CYAN, 12, "Arial", 1)
+label("Sysex Vault", 32, 6, 220, 15, TXT, 12, "Arial Bold", 0)
+label("⟳    ⚙    ⤓", 470, 7, 112, 12, TXT3, 10, "Arial", 2)
+panel(14, 23, W - 28, 1, BTNBORD)                                      # header divider (close under title)
 
 # --- LEFT: QUICK ACTIONS ---
-hdr("QUICK ACTIONS", 14, 40, 176)
-card(14,  54, 176, 36, "✈", "SEND SYSEX",    "Send Message",  CYAN)
-card(14,  96, 176, 36, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
-card(14, 138, 176, 36, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
+hdr("QUICK ACTIONS", 14, 30, 178)
+card(14,  44, 178, 34, "✈", "SEND SYSEX",    "Send Message",  CYAN)
+card(14,  82, 178, 34, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
+card(14, 120, 178, 34, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
 
 # --- CENTER: SYSEX BUILDER ---
-hdr("SYSEX BUILDER", 206, 40, 190)
+hdr("SYSEX BUILDER", 204, 30, 190)
 BYTES = ["F0", "7E", "00", "06", "12", "34", "56", "78", "F7"]
-cx = 206
+cx = 204
 for i, bv in enumerate(BYTES):
-    bytecell(cx, 54, 18, 22, bv, selected=(i == 4))
-    label(str(i), cx, 78, 18, 9, TXT3, 7, "Arial", 1)
+    bytecell(cx, 42, 18, 20, bv, selected=(i == 4))
+    label(str(i), cx, 64, 18, 8, TXT3, 7, "Arial", 1)
     cx += 20
-label("Click a byte to edit", 206, 90, 190, 10, TXT3, 8, "Arial", 0)
 
-hdr("BYTE EDITOR", 206, 104, 120)
-panel(206, 116, 44, 30, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
-label("12", 206, 122, 44, 18, CYAN, 17, "Arial Bold", 1)
-label("HEX", 206, 147, 44, 8, TXT3, 7, "Arial", 1)
-label("▲", 254, 116, 14, 14, TXT2, 10, "Arial", 1)
-label("▼", 254, 132, 14, 14, TXT2, 10, "Arial", 1)
-label("DEC", 282, 120, 34, 10, TXT3, 8, "Arial", 0)
-label("18", 282, 131, 34, 14, TXT, 12, "Arial Bold", 0)
+hdr("BYTE EDITOR", 204, 76, 120)
+panel(204, 88, 40, 26, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("12", 204, 92, 40, 16, CYAN, 15, "Arial Bold", 1)
+label("HEX", 204, 115, 40, 8, TXT3, 7, "Arial", 1)
+label("▲", 248, 88, 12, 12, TXT2, 9, "Arial", 1)
+label("▼", 248, 101, 12, 12, TXT2, 9, "Arial", 1)
+label("DEC", 276, 90, 30, 9, TXT3, 8, "Arial", 0)
+label("18", 276, 100, 34, 13, TXT, 12, "Arial Bold", 0)
 
-hdr("PRESETS", 206, 158, 120)
-panel(206, 170, 118, 20, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
-label("User 1", 213, 173, 90, 13, TXT, 9, "Arial", 0)
-label("▼", 308, 173, 12, 13, TXT3, 8, "Arial", 1)
-deadpill(206, 196, 56, 20, "SAVE", CYAN)
-deadpill(268, 196, 56, 20, "SAVE AS", CYAN)
+hdr("PRESETS", 204, 126, 190)
+panel(204, 138, 116, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("User 1", 211, 140, 90, 13, TXT, 9, "Arial", 0)
+label("▼", 306, 140, 12, 13, TXT3, 8, "Arial", 1)
+deadpill(204, 158, 56, 16, "SAVE", CYAN)
+deadpill(264, 158, 56, 16, "SAVE AS", CYAN)
 
-hdr("DEVICE INFO", 206, 224, 160)
-label("MIDI Port", 206, 238, 70, 11, TXT3, 8, "Arial", 0)
-label("IAC Driver Bus 1", 278, 238, 118, 11, TXT2, 8, "Arial", 0)
-label("Firmware", 206, 252, 70, 11, TXT3, 8, "Arial", 0)
-label("1.23", 278, 252, 118, 11, CYAN, 8, "Arial", 0)
-
-# --- RIGHT: PRESET MANAGER ---
-hdr("PRESET MANAGER", 410, 40, 172)
-card(410,  54, 172, 36, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
-card(410,  96, 172, 36, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
-deadpill(410, 180, 172, 26, "MANAGE PRESETS", CYAN, filled=True)
-
-# --- footer ---
-panel(14, 264, W - 28, 1, BTNBORD)
-label("Edit", 14, 270, 80, 12, TXT2, 9, "Arial", 0)
-label("⤴", W - 30, 268, 16, 16, TXT2, 12, "Arial", 1)
+# --- RIGHT: PRESET MANAGER (+ device info at the foot) ---
+hdr("PRESET MANAGER", 406, 30, 178)
+card(406, 44, 178, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+card(406, 82, 178, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+deadpill(406, 120, 178, 22, "MANAGE PRESETS", CYAN, filled=True)
+hdr("DEVICE INFO", 406, 148, 178)
+label("MIDI: IAC Driver Bus 1", 406, 161, 130, 10, TXT2, 8, "Arial", 0)
+label("FW 1.23", 540, 161, 44, 10, CYAN, 8, "Arial", 2)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
@@ -288,7 +279,7 @@ patcher = {"patcher": {
     "fileversion": 1,
     "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
     "classnamespace": "box",
-    "rect": [100.0, 100.0, 596.0, 322.0],
+    "rect": [100.0, 100.0, 596.0, 210.0],
     "openinpresentation": 1,
     "default_fontsize": 11.0, "default_fontname": "Arial",
     "gridsize": [8.0, 8.0],
@@ -299,7 +290,7 @@ js = json.dumps(patcher, indent=4).encode("utf-8")
 payload = js + b"\x00"
 def chunk(tag, data): return tag + struct.pack("<I", len(data)) + data
 blob = chunk(b"ampf", b"mmmm") + chunk(b"meta", struct.pack("<I", 1)) + chunk(b"ptch", payload)
-out = os.path.join(HERE, "sysex-clip-manager.amxd")
+out = os.path.join(HERE, "Sysex Vault.amxd")
 open(out, "wb").write(blob)
 raw = open(out, "rb").read(); i = raw.find(b"ptch"); ln = struct.unpack("<I", raw[i+4:i+8])[0]
 back = json.loads(raw[i+8:i+8+ln].rstrip(b"\x00").decode("utf-8"))

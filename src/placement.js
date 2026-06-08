@@ -1,6 +1,6 @@
 "use strict";
 // ============================================================================
-// Parked-clip placement  —  SysEx Clip Manager
+// Parked-clip placement  —  Sysex Vault
 //
 // STATELESS global stagger. Per-track devices don't share a counter; instead,
 // at park-time a device asks LiveAPI for the bar position of EVERY [sx:...]-tagged

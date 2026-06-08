@@ -1,4 +1,4 @@
-# Ableton Live SysEx Clip Manager — Architecture & Feasibility
+# Ableton Live Sysex Vault — Architecture & Feasibility
 
 **Status:** Design draft, 2026-06-05.
 **Confidence key:** ✅ verified firsthand (this codebase/session) · 🟢 high (established knowledge) · 🟡 medium — *spike to confirm* · 🔴 known blocker / open problem.

@@ -1,4 +1,4 @@
-# SysEx Clip Manager
+# Sysex Vault
 
 **Total recall for hardware-synth patches in Ableton Live.** Attach a synth's SysEx
 patch dump to a clip — when that clip plays, the device sends the dump back to the
@@ -10,7 +10,7 @@ A Max for Live device (Live 12 + Max for Live). One instance per MIDI track.
 
 ## Download / install
 
-1. Grab **`device/sysex-clip-manager.amxd`** (keep the `device/` and `src/` folders
+1. Grab **`device/Sysex Vault.amxd`** (keep the `device/` and `src/` folders
    together — the device loads its code from `../src/`).
 2. In Live, on a **MIDI track that drives a hardware synth via an External Instrument**,
    drop the device on **before the External Instrument** in the chain.
@@ -69,7 +69,7 @@ SysEx messages, so individual messages are never fragmented.
   External Instrument forwards the SysEx to the synth. So the device just needs to
   sit on the track, before the External Instrument.
 - **Persistence without the Live Set.** Dump *bytes* live in a content-addressed
-  file store (`~/Music/Ableton/User Library/SysEx Clip Manager/dumps/<hash>.syx`,
+  file store (`~/Music/Ableton/User Library/Sysex Vault/dumps/<hash>.syx`,
   deduped). The clip→dump *link* lives in the clip **name** as `[sx:uuid:hash]`,
   which Live preserves across save/load and duplicate. Nothing is written into the
   `.als` (the Live Set dict can't carry this data reliably in Live 12).
@@ -106,7 +106,7 @@ node test/placement.test.js  # stateless bar-stagger
 155 tests total. The device patch is generated headless:
 
 ```
-python3 device/gen_amxd.py   # writes device/sysex-clip-manager.amxd
+python3 device/gen_amxd.py   # writes device/Sysex Vault.amxd
 ```
 
 - `src/` — the tested engine (sysex / identity / library / store / placement).

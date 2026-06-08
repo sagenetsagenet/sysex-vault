@@ -53,12 +53,13 @@ not a blocker for the current state of the repository.
 
 ## 3. Trademark
 
-"SysEx Clip Manager" is a descriptive compound of generic MIDI ("SysEx") and
-Ableton Live ("Clip") terms. No conflicting trademark was found in available
-searches; the name is clear to use. Its descriptiveness also means it is weak as
-a registrable mark — SAGENET should not rely on trademark protection for the
-product name. A live USPTO TESS and EUIPO eSearch check should be documented
-before any formal release filing.
+The product was renamed from "SysEx Clip Manager" to **"Sysex Vault"**. Unlike the
+old descriptive name, "Vault" is a distinctive (suggestive) term, which makes
+"Sysex Vault" both more protectable AND more likely to collide with existing
+"Vault"-branded audio/MIDI software. The earlier clearance ("SysEx Clip Manager"
+= clear) does NOT carry over. A fresh trademark check on "Sysex Vault" (USPTO
+TESS + EUIPO eSearch + general audio-market search for "Vault" products) is an
+OPEN pre-release item before any formal release/filing.
 
 ---
 

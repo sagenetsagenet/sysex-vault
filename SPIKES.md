@@ -1,4 +1,4 @@
-# SysEx Clip Manager — De-risk Spikes
+# Sysex Vault — De-risk Spikes
 
 Throwaway experiments to validate the riskiest assumptions **before** building the
 device. Each ends in go / no-go / pivot.

@@ -1,6 +1,6 @@
 "use strict";
 // ============================================================================
-// Clip identity & duplicate reconciliation  —  SysEx Clip Manager
+// Clip identity & duplicate reconciliation  —  Sysex Vault
 //
 // SPIKE #3 (logic half). Live/SDK expose NO persistent clip ID, so we mint a
 // UUID and embed it in the clip NAME — the only per-clip field that survives

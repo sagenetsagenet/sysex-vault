@@ -1,6 +1,6 @@
 "use strict";
 // ============================================================================
-// SysEx Clip Manager — Node-for-Max device script (runs in [node.script])
+// Sysex Vault — Node-for-Max device script (runs in [node.script])
 //
 // PER-TRACK model. The device sits on a MIDI track, BEFORE its External Instrument.
 //   • CAPTURE: [sysexin] (track input) -> here -> content-addressed file store.
@@ -21,7 +21,7 @@ const identity = require("../src/identity.js");
 const store = require("../src/store.js");
 const placement = require("../src/placement.js");
 
-const STORE_DIR = path.join(os.homedir(), "Music", "Ableton", "User Library", "SysEx Clip Manager", "dumps");
+const STORE_DIR = path.join(os.homedir(), "Music", "Ableton", "User Library", "Sysex Vault", "dumps");
 
 let armed = false;
 let lastHash = null;        // most-recent dump (for the manual transmitlast button)

@@ -1,7 +1,7 @@
 // ============================================================================
 // liveglue.js — Max [js] object (Live's JS engine, NOT node.script)
 //
-// The LiveAPI layer for the PER-TRACK SysEx Clip Manager. It controls ONLY its
+// The LiveAPI layer for the PER-TRACK Sysex Vault. It controls ONLY its
 // own track (this_device -> canonical_parent). All decisions (hashing, identity,
 // stagger math) live in the TESTED node modules; this file is pure LiveAPI glue.
 //
