@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate sysex-clip-manager.amxd — PER-TRACK SysEx Clip Manager with a 90s-neon UI.
+Generate sysex-clip-manager.amxd — PER-TRACK SysEx Clip Manager.
+
+Dark cyber-industrial presentation: graphite surfaces, cyan primary accent,
+sparing violet — a premium MIDI/SysEx editor look (Elektron Transfer / Sequential
+editor vibe), Ableton-native. Functionality is unchanged from the prior build.
 
 Place on a MIDI track, BEFORE its External Instrument.
 PRESENTATION (what Live shows): ARM, SPEED (4-seg), IMPORT/EXPORT/LIST/TEST, status LCD.
@@ -11,19 +15,26 @@ import json, struct, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 SYX = os.path.join(os.path.dirname(HERE), "data", "test-dx7-vced.syx")
 
-# ---- 90s neon palette (normalized RGBA) ----
-BG     = [0.055, 0.043, 0.125, 1.0]
-PANEL  = [0.12, 0.08, 0.22, 1.0]
-LCDBG  = [0.02, 0.06, 0.035, 1.0]
-MAG    = [1.0, 0.16, 0.62, 1.0]
-DKMAG  = [0.42, 0.05, 0.26, 1.0]
-MAGHI  = [1.0, 0.42, 0.78, 1.0]
-CYAN   = [0.0, 0.92, 1.0, 1.0]
-DKCYAN = [0.0, 0.30, 0.38, 1.0]
-YELLOW = [1.0, 0.86, 0.0, 1.0]
-GREEN  = [0.25, 1.0, 0.55, 1.0]
-WHITE  = [0.95, 0.97, 1.0, 1.0]
-BLACK  = [0.0, 0.0, 0.0, 1.0]
+# ---- dark cyber-industrial palette (premium SysEx editor) ----
+def hexrgba(h, a=1.0):
+    h = h.lstrip("#")
+    return [int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4)] + [a]
+
+BG      = hexrgba("070C12")   # deep charcoal-blue — main background
+PANEL   = hexrgba("0E1621")   # secondary panels (speed/info bezels)
+PANEL2  = hexrgba("101722")   # ARM bezel interior
+RAISED  = hexrgba("162233")   # raised interactive base (ARM idle)
+BTNBG   = hexrgba("182332")   # button / inactive segment
+BTNON   = hexrgba("20394A")   # pressed / active segment
+BTNBORD = hexrgba("2A3B50")   # default button border
+CYAN    = hexrgba("20D7FF")   # primary accent — borders, headers, active
+VIOLET  = hexrgba("9A6BFF")   # secondary accent — used sparingly
+TXT     = hexrgba("E8EDF5")   # primary text
+TXT2    = hexrgba("A7B4C6")   # secondary text
+TXT3    = hexrgba("6F8095")   # muted text
+INACT   = hexrgba("5A6472")   # inactive indicator
+LCDBG   = hexrgba("0A1018")   # inset readout background
+BLACK   = BG                  # on-accent text sits on the deep background tone
 
 _id = [0]
 def nid(p="o"):
@@ -62,14 +73,16 @@ def label(text, x, y, w, h, color, size=11, font="Arial Bold", just=0):
          "textjustification": just}))
     return oid
 
-def tbutton(text, x, y, w, h, bg, bgon, txt, txton, size=12, rounded=6):
+def tbutton(text, x, y, w, h, bg, bgon, txt, txton, size=12, rounded=6, bord=None):
     oid = nid("b")
+    if bord is None:
+        bord = txt
     add(base(oid, "textbutton", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
          "text": text, "fontsize": size, "rounded": rounded,
          "bgcolor": bg, "bgovercolor": bgon, "bgoncolor": bgon,
          "textcolor": txt, "textovercolor": txton, "textoncolor": txton,
-         "border": 1, "outlinecolor": txt}))
+         "border": 1, "outlinecolor": bord}))
     return oid
 
 def livetab(x, y, w, h, enum, init):
@@ -77,8 +90,8 @@ def livetab(x, y, w, h, enum, init):
     add(base(oid, "live.tab", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 3, "outlettype": ["", "", ""],
          "parameter_enable": 1,
-         "bgcolor": PANEL, "activebgcolor": MAG, "textcolor": CYAN,
-         "activetextcolor": BLACK, "focusbordercolor": CYAN, "fontsize": 10,
+         "bgcolor": BTNBG, "activebgcolor": BTNON, "textcolor": TXT2,
+         "activetextcolor": CYAN, "focusbordercolor": CYAN, "fontsize": 10,
          "saved_attribute_attributes": {"valueof": {
              "parameter_enum": enum, "parameter_longname": "Speed",
              "parameter_mmax": len(enum) - 1, "parameter_shortname": "Speed",
@@ -104,33 +117,33 @@ def line(src, sout, dst, din):
 
 # ============================ PRESENTATION (the UI) ==========================
 panel(0, 0, 484, 178, BG)
-panel(0, 0, 484, 3, CYAN)                       # top neon rule
-panel(0, 175, 484, 3, MAG)                      # bottom neon rule
-panel(8, 46, 162, 74, PANEL, rounded=10, border=2, bordercolor=MAG)   # ARM bezel
+panel(0, 0, 484, 2, CYAN)                       # top accent rule (cyan)
+panel(0, 176, 484, 2, VIOLET)                   # bottom accent rule (violet, sparing)
+panel(8, 46, 162, 74, PANEL2, rounded=12, border=2, bordercolor=CYAN)  # ARM bezel
 panel(176, 44, 300, 76, PANEL, rounded=10, border=2, bordercolor=CYAN) # speed bezel
 
-label("◢◤  S Y S E X · V A U L T  ◣◥", 0, 8, 484, 22, MAG, 16, "Arial Black", 1)
-label("P A T C H   R E C A L L   S Y S T E M   '9 X", 0, 30, 484, 12, CYAN, 9, "Arial Bold", 1)
+label("S Y S E X   V A U L T", 0, 9, 484, 22, CYAN, 16, "Arial Bold", 1)
+label("P A T C H   R E C A L L   S Y S T E M", 0, 31, 484, 12, TXT2, 9, "Arial Bold", 1)
 
 # ARM (big)
-ARM = tbutton("◉ ARM", 16, 52, 146, 62, DKMAG, MAG, CYAN, BLACK, size=20, rounded=8)
+ARM = tbutton("◉ ARM", 16, 52, 146, 62, RAISED, CYAN, CYAN, BG, size=20, rounded=10)
 
 # SPEED selector
-label("◄  X M I T   S P E E D  ►", 180, 48, 292, 12, CYAN, 10, "Arial Bold", 1)
+label("X M I T   S P E E D", 180, 48, 292, 12, CYAN, 10, "Arial Bold", 1)
 SPEED = livetab(182, 66, 288, 26, ["VINTAGE", "STANDARD", "FAST", "TURBO"], 1)
-label("½× 1562   1× 3125 std   2× 6250   4× 12500  B/s", 180, 98, 292, 12, YELLOW, 8, "Arial", 1)
+label("½× 1562   1× 3125 std   2× 6250   4× 12500  B/s", 180, 98, 292, 12, TXT3, 8, "Arial", 1)
 
 # action row
-IMPORT = tbutton("IMPORT", 16, 124, 110, 24, PANEL, CYAN, CYAN, BLACK, size=11)
-EXPORT = tbutton("EXPORT", 132, 124, 110, 24, PANEL, CYAN, CYAN, BLACK, size=11)
-LIST   = tbutton("LIST",   248, 124, 102, 24, PANEL, YELLOW, YELLOW, BLACK, size=11)
-TEST   = tbutton("TEST ▶", 356, 124, 112, 24, PANEL, MAGHI, MAGHI, BLACK, size=11)
+IMPORT = tbutton("IMPORT", 16, 124, 110, 24, BTNBG, BTNON, TXT, CYAN,   size=11, rounded=8, bord=BTNBORD)
+EXPORT = tbutton("EXPORT", 132, 124, 110, 24, BTNBG, BTNON, TXT, CYAN,   size=11, rounded=8, bord=BTNBORD)
+LIST   = tbutton("LIST",   248, 124, 102, 24, BTNBG, BTNON, TXT, CYAN,   size=11, rounded=8, bord=BTNBORD)
+TEST   = tbutton("TEST ▶", 356, 124, 112, 24, BTNBG, BTNON, TXT, VIOLET, size=11, rounded=8, bord=BTNBORD)
 
 # status LCD
-panel(8, 152, 468, 20, LCDBG, rounded=5, border=1, bordercolor=GREEN)
+panel(8, 152, 468, 20, LCDBG, rounded=5, border=1, bordercolor=CYAN)
 add(base("statusLCD", "comment", 16, 154, 452, 16, True,
     {"numinlets": 1, "numoutlets": 0,
-     "text": "> READY", "textcolor": GREEN, "fontsize": 11,
+     "text": "> READY", "textcolor": CYAN, "fontsize": 11,
      "fontname": "Courier New", "textjustification": 0}))
 
 # ============================ PATCHING (hidden) =============================
