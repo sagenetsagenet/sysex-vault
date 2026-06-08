@@ -9,8 +9,8 @@
 // best-effort device/patch-name extraction (pluggable per-model), and the
 // "[Track] - [Manufacturer] - [Patch|Dump]" naming convention.
 //
-// The full manufacturer table (594 entries) lives in ./manufacturers.js,
-// AUTO-GENERATED from the MMA registry (see scripts/gen_manufacturers.js).
+// The full manufacturer table lives in ./manufacturers.js, an independent
+// compilation scraped from the MMA registry (see scripts/scrape_mma.js).
 // ============================================================================
 
 const MANUFACTURERS = require("./manufacturers.js"); // hex key -> official name

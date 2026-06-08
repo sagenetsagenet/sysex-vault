@@ -96,7 +96,7 @@ SysEx messages, so individual messages are never fragmented.
 Pure, Node-for-Max-compatible engine with a headless test suite:
 
 ```
-node test/sysex.test.js      # parser + 594-entry MMA manufacturer table
+node test/sysex.test.js      # parser + 777-entry MMA manufacturer table
 node test/identity.test.js   # clip-name identity + duplicate reconcile (+hash refs)
 node test/library.test.js    # content-addressed dump library
 node test/store.test.js      # file store
@@ -116,3 +116,12 @@ python3 device/gen_amxd.py   # writes device/sysex-clip-manager.amxd
 - `device/probe.js`, `device/sxpass.js` — throwaway LiveAPI probes used to de-risk
   the design (kept for reference).
 - `ARCHITECTURE.md`, `SPIKES.md` — the original design + de-risk record.
+
+---
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). The MIDI manufacturer ID table in
+`src/manufacturers.js` is an independent SAGENET compilation scraped from the
+MIDI Association's public registry (`scripts/scrape_mma.js`); see
+[`NOTICE.md`](NOTICE.md) for provenance and attribution detail.
