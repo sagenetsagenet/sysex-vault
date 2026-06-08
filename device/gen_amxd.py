@@ -146,6 +146,16 @@ def deadpill(x, y, w, h, text, accent, filled=False):
 def hdr(text, x, y, w):
     label(text, x, y, w, 11, TXT3, 8, "Arial Bold", 0)
 
+def clickzone(oid, x, y, w, h, hover):
+    # transparent momentary button that sits ON TOP of a card to make it clickable;
+    # outputs a bang-ish 1/0 we trigger off of. Author AFTER the card so it draws on top.
+    add(base(oid, "textbutton", x, y, w, h, True,
+        {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
+         "text": "", "fontsize": 8, "rounded": 8, "border": 0,
+         "bgcolor": [0, 0, 0, 0], "bgovercolor": hover, "bgoncolor": hover,
+         "textcolor": [0, 0, 0, 0], "textovercolor": [0, 0, 0, 0], "textoncolor": [0, 0, 0, 0]}))
+    return oid
+
 # ============================ PRESENTATION (the UI) ==========================
 # Faithful reproduction of the "Sysex Control" dashboard mockup, COMPACTED to fit
 # the M4L device window height (~176px usable). Device Info moved into the right
@@ -167,6 +177,9 @@ hdr("QUICK ACTIONS", 12, 30, 92)
 card(12,  44, 92, 34, "", "SEND SYSEX",    "Send Message",  CYAN)
 card(12,  82, 92, 34, "", "REQUEST DATA",  "Send Request",  CYAN)
 card(12, 120, 92, 34, "", "RECEIVE PATCH", "Receive Patch", VIOLET)
+# WIRED: Receive Patch = arm the device to capture the next dump from the synth
+# (same as the old ARM button). Overlay drawn after the card so it's clickable.
+clickzone("rcvbtn", 12, 120, 92, 34, [0.604, 0.420, 1.0, 0.16])
 
 # --- CENTER: PRESETS  (10px gap from left column) ---
 hdr("PRESETS", 114, 30, 106)
@@ -245,6 +258,7 @@ line("mrescan", 0, "glue", 0)
 
 # UI -> node
 line(ARM, 0, "sarm", 0); line("sarm", 0, "marm", 0); line("marm", 0, "node", 0)
+line("rcvbtn", 0, "sarm", 0)         # WIRED: visible "Receive Patch" card -> arm chain
 line(IMPORT, 0, "simp", 0); line("simp", 0, "odlg", 0); line("odlg", 0, "pimp", 0); line("pimp", 0, "node", 0)
 line(EXPORT, 0, "sexp", 0); line("sexp", 0, "sdlg", 0); line("sdlg", 0, "pexp", 0); line("pexp", 0, "node", 0)
 line(LIST, 0, "slst", 0); line("slst", 0, "mlst", 0); line("mlst", 0, "node", 0)
