@@ -121,9 +121,10 @@ def line(src, sout, dst, din):
 # ---- dashboard helpers (presentation cards / cells / pills) ----
 def card(x, y, w, h, icon, title, subtitle, accent, star=False):
     panel(x, y, w, h, RAISED, rounded=8, border=1, bordercolor=BTNBORD)
-    label(icon, x + 10, y + (h - 18) // 2, 20, 18, accent, 14, "Arial", 1)
-    label(title, x + 36, y + 5, w - 48, 13, TXT, 10, "Arial Bold", 0)
-    label(subtitle, x + 36, y + 19, w - 50, 11, TXT3, 8, "Arial", 0)
+    label(icon, x + 12, y + (h - 18) // 2, 20, 18, accent, 14, "Arial", 1)
+    # title + subtitle centered across the full card (no left-pinned dead space)
+    label(title, x, y + 5, w, 13, TXT, 10, "Arial Bold", 1)
+    label(subtitle, x, y + 19, w, 11, TXT3, 8, "Arial", 1)
     if star:
         label("★", x + w - 18, y + 5, 12, 12, TXT3, 9, "Arial", 1)
 
