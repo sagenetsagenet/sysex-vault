@@ -121,12 +121,12 @@ def line(src, sout, dst, din):
 # ---- dashboard helpers (presentation cards / cells / pills) ----
 def card(x, y, w, h, icon, title, subtitle, accent, star=False):
     panel(x, y, w, h, RAISED, rounded=8, border=1, bordercolor=BTNBORD)
-    label(icon, x + 12, y + (h - 18) // 2, 20, 18, accent, 14, "Arial", 1)
-    # title + subtitle centered across the full card (no left-pinned dead space)
-    label(title, x, y + 5, w, 13, TXT, 10, "Arial Bold", 1)
-    label(subtitle, x, y + 19, w, 11, TXT3, 8, "Arial", 1)
+    label(icon, x + 6, y + (h - 18) // 2, 18, 18, accent, 14, "Arial", 1)
+    # title + subtitle centered in the space right of the icon (no dead strips)
+    label(title, x + 22, y + 5, w - 28, 13, TXT, 10, "Arial Bold", 1)
+    label(subtitle, x + 22, y + 19, w - 28, 11, TXT3, 8, "Arial", 1)
     if star:
-        label("★", x + w - 18, y + 5, 12, 12, TXT3, 9, "Arial", 1)
+        label("★", x + w - 16, y + 5, 12, 12, TXT3, 9, "Arial", 1)
 
 def bytecell(x, y, w, h, hexstr, selected=False):
     bc = CYAN if selected else BTNBORD
@@ -152,34 +152,34 @@ def hdr(text, x, y, w):
 # manager, device-info, and send/request/receive cards are PLACEHOLDER visuals
 # (NOT wired). The real functional controls are created afterward with
 # presentation=0 (hidden but still fully connected), for a later wiring pass.
-W, H = 516, 166
+W, H = 402, 166
 panel(0, 0, W, H, BG, rounded=12, border=1, bordercolor=BTNBORD)        # window
 
 # --- header bar (tight gap to divider) ---
 label("✈", 12, 6, 16, 16, CYAN, 12, "Arial", 1)
-label("Sysex Vault", 30, 6, 200, 15, TXT, 12, "Arial Bold", 0)
-label("⟳    ⚙    ⤓", 384, 7, 120, 12, TXT3, 10, "Arial", 2)
+label("Sysex Vault", 30, 6, 180, 15, TXT, 12, "Arial Bold", 0)
+label("⟳   ⚙   ⤓", 296, 7, 94, 12, TXT3, 10, "Arial", 2)
 panel(12, 23, W - 24, 1, BTNBORD)                                      # header divider (close under title)
 
-# --- LEFT: QUICK ACTIONS  (margin 12) ---
-hdr("QUICK ACTIONS", 12, 30, 178)
-card(12,  44, 178, 34, "✈", "SEND SYSEX",    "Send Message",  CYAN)
-card(12,  82, 178, 34, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
-card(12, 120, 178, 34, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
+# --- LEFT: QUICK ACTIONS  (margin 12, narrow cards) ---
+hdr("QUICK ACTIONS", 12, 30, 126)
+card(12,  44, 126, 34, "✈", "SEND SYSEX",    "Send Message",  CYAN)
+card(12,  82, 126, 34, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
+card(12, 120, 126, 34, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
 
 # --- CENTER: PRESETS  (10px gap from left column) ---
-hdr("PRESETS", 200, 30, 120)
-panel(200, 42, 116, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
-label("User 1", 207, 44, 90, 13, TXT, 9, "Arial", 0)
-label("▼", 302, 44, 12, 13, TXT3, 8, "Arial", 1)
-deadpill(200, 64, 56, 16, "SAVE", CYAN)
-deadpill(260, 64, 56, 16, "SAVE AS", CYAN)
+hdr("PRESETS", 148, 30, 106)
+panel(148, 42, 106, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("User 1", 155, 44, 84, 13, TXT, 9, "Arial", 0)
+label("▼", 240, 44, 12, 13, TXT3, 8, "Arial", 1)
+deadpill(148, 64, 51, 16, "SAVE", CYAN)
+deadpill(203, 64, 51, 16, "SAVE AS", CYAN)
 
-# --- RIGHT: PRESET MANAGER  (10px gap from presets column) ---
-hdr("PRESET MANAGER", 326, 30, 178)
-card(326, 44, 178, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
-card(326, 82, 178, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
-deadpill(326, 120, 178, 22, "MANAGE PRESETS", CYAN, filled=True)
+# --- RIGHT: PRESET MANAGER  (10px gap from presets column, narrow cards) ---
+hdr("PRESET MANAGER", 264, 30, 126)
+card(264, 44, 126, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+card(264, 82, 126, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+deadpill(264, 120, 126, 22, "MANAGE PRESETS", CYAN, filled=True)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
@@ -260,7 +260,7 @@ patcher = {"patcher": {
     "fileversion": 1,
     "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
     "classnamespace": "box",
-    "rect": [100.0, 100.0, 516.0, 200.0],
+    "rect": [100.0, 100.0, 402.0, 200.0],
     "openinpresentation": 1,
     "default_fontsize": 11.0, "default_fontname": "Arial",
     "gridsize": [8.0, 8.0],
