@@ -120,93 +120,94 @@ def line(src, sout, dst, din):
 
 # ---- dashboard helpers (presentation cards / cells / pills) ----
 def card(x, y, w, h, icon, title, subtitle, accent, star=False):
-    panel(x, y, w, h, RAISED, rounded=10, border=1, bordercolor=BTNBORD)
-    label(icon, x + 13, y + (h - 22) // 2, 24, 22, accent, 16, "Arial", 1)
-    label(title, x + 44, y + 9, w - 56, 14, TXT, 11, "Arial Bold", 0)
-    label(subtitle, x + 44, y + 27, w - 60, 12, TXT3, 9, "Arial", 0)
+    panel(x, y, w, h, RAISED, rounded=8, border=1, bordercolor=BTNBORD)
+    label(icon, x + 10, y + (h - 18) // 2, 20, 18, accent, 14, "Arial", 1)
+    label(title, x + 36, y + 5, w - 48, 13, TXT, 10, "Arial Bold", 0)
+    label(subtitle, x + 36, y + 19, w - 50, 11, TXT3, 8, "Arial", 0)
     if star:
-        label("★", x + w - 22, y + 8, 14, 14, TXT3, 10, "Arial", 1)
+        label("★", x + w - 18, y + 5, 12, 12, TXT3, 9, "Arial", 1)
 
 def bytecell(x, y, w, h, hexstr, selected=False):
     bc = CYAN if selected else BTNBORD
     tc = CYAN if selected else TXT
-    panel(x, y, w, h, BTNBG, rounded=5, border=2 if selected else 1, bordercolor=bc)
-    label(hexstr, x, y + (h - 13) // 2, w, 13, tc, 9, "Courier New", 1)
+    panel(x, y, w, h, BTNBG, rounded=4, border=2 if selected else 1, bordercolor=bc)
+    label(hexstr, x, y + (h - 12) // 2, w, 12, tc, 8, "Courier New", 1)
 
 def deadpill(x, y, w, h, text, accent, filled=False):
     if filled:
-        panel(x, y, w, h, accent, rounded=8)
-        label(text, x, y + (h - 13) // 2, w, 13, BG, 10, "Arial Bold", 1)
+        panel(x, y, w, h, accent, rounded=6)
+        label(text, x, y + (h - 12) // 2, w, 12, BG, 9, "Arial Bold", 1)
     else:
-        panel(x, y, w, h, BTNBG, rounded=8, border=1, bordercolor=accent)
-        label(text, x, y + (h - 13) // 2, w, 13, accent, 10, "Arial Bold", 1)
+        panel(x, y, w, h, BTNBG, rounded=6, border=1, bordercolor=accent)
+        label(text, x, y + (h - 12) // 2, w, 12, accent, 9, "Arial Bold", 1)
 
 def hdr(text, x, y, w):
-    label(text, x, y, w, 12, TXT3, 9, "Arial Bold", 0)
+    label(text, x, y, w, 11, TXT3, 8, "Arial Bold", 0)
 
 # ============================ PRESENTATION (the UI) ==========================
-# Faithful reproduction of the "Sysex Control" dashboard mockup. NOTE: the byte
-# builder / editor, preset manager, device-info, and send/request/receive cards
-# are PLACEHOLDER visuals (NOT wired). The real functional controls are created
-# afterward with presentation=0 (hidden but still fully connected), to be mapped
-# onto this layout in a later wiring pass.
-W, H = 600, 396
-panel(0, 0, W, H, BG, rounded=14, border=1, bordercolor=BTNBORD)        # window
+# Faithful reproduction of the "Sysex Control" dashboard mockup, COMPACTED to fit
+# the M4L device window (was 600x396, clipped at the bottom; now ~596x290).
+# NOTE: the byte builder / editor, preset manager, device-info, and send/request/
+# receive cards are PLACEHOLDER visuals (NOT wired). The real functional controls
+# are created afterward with presentation=0 (hidden but still fully connected),
+# to be mapped onto this layout in a later wiring pass.
+W, H = 596, 290
+panel(0, 0, W, H, BG, rounded=12, border=1, bordercolor=BTNBORD)        # window
 
 # --- header bar ---
-label("✈", 16, 13, 20, 20, CYAN, 15, "Arial", 1)
-label("Sysex Vault", 42, 14, 240, 18, TXT, 13, "Arial Bold", 0)
-label("⟳    ⚙    ⤓", 466, 15, 118, 16, TXT3, 12, "Arial", 2)
-panel(16, 44, W - 32, 1, BTNBORD)                                      # header divider
+label("✈", 14, 9, 18, 18, CYAN, 13, "Arial", 1)
+label("Sysex Vault", 34, 10, 220, 16, TXT, 12, "Arial Bold", 0)
+label("⟳    ⚙    ⤓", 468, 11, 114, 14, TXT3, 11, "Arial", 2)
+panel(14, 32, W - 28, 1, BTNBORD)                                      # header divider
 
 # --- LEFT: QUICK ACTIONS ---
-hdr("QUICK ACTIONS", 16, 58, 172)
-card(16,  76, 172, 52, "✈", "SEND SYSEX",    "Send Message",  CYAN)
-card(16, 136, 172, 52, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
-card(16, 196, 172, 52, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
+hdr("QUICK ACTIONS", 14, 40, 176)
+card(14,  54, 176, 36, "✈", "SEND SYSEX",    "Send Message",  CYAN)
+card(14,  96, 176, 36, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
+card(14, 138, 176, 36, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
 
 # --- CENTER: SYSEX BUILDER ---
-hdr("SYSEX BUILDER", 204, 58, 200)
+hdr("SYSEX BUILDER", 206, 40, 190)
 BYTES = ["F0", "7E", "00", "06", "12", "34", "56", "78", "F7"]
-cx = 204
+cx = 206
 for i, bv in enumerate(BYTES):
-    bytecell(cx, 78, 20, 26, bv, selected=(i == 4))
-    label(str(i), cx, 107, 20, 10, TXT3, 8, "Arial", 1)
-    cx += 22
-label("Click a byte to edit", 204, 122, 200, 12, TXT3, 9, "Arial", 0)
+    bytecell(cx, 54, 18, 22, bv, selected=(i == 4))
+    label(str(i), cx, 78, 18, 9, TXT3, 7, "Arial", 1)
+    cx += 20
+label("Click a byte to edit", 206, 90, 190, 10, TXT3, 8, "Arial", 0)
 
-hdr("BYTE EDITOR", 204, 142, 120)
-panel(204, 156, 54, 42, BTNBG, rounded=6, border=1, bordercolor=BTNBORD)
-label("12", 204, 165, 54, 22, CYAN, 20, "Arial Bold", 1)
-label("HEX", 204, 199, 54, 10, TXT3, 8, "Arial", 1)
-label("▲", 262, 158, 16, 16, TXT2, 11, "Arial", 1)
-label("▼", 262, 180, 16, 16, TXT2, 11, "Arial", 1)
-label("DEC", 300, 162, 40, 12, TXT3, 9, "Arial", 0)
-label("18", 300, 176, 40, 16, TXT, 13, "Arial Bold", 0)
+hdr("BYTE EDITOR", 206, 104, 120)
+panel(206, 116, 44, 30, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("12", 206, 122, 44, 18, CYAN, 17, "Arial Bold", 1)
+label("HEX", 206, 147, 44, 8, TXT3, 7, "Arial", 1)
+label("▲", 254, 116, 14, 14, TXT2, 10, "Arial", 1)
+label("▼", 254, 132, 14, 14, TXT2, 10, "Arial", 1)
+label("DEC", 282, 120, 34, 10, TXT3, 8, "Arial", 0)
+label("18", 282, 131, 34, 14, TXT, 12, "Arial Bold", 0)
 
-hdr("PRESETS", 204, 214, 120)
-panel(204, 228, 132, 22, BTNBG, rounded=6, border=1, bordercolor=BTNBORD)
-label("User 1", 212, 232, 100, 14, TXT, 10, "Arial", 0)
-label("▼", 318, 232, 14, 14, TXT3, 9, "Arial", 1)
-deadpill(204, 256, 62, 22, "SAVE", CYAN)
-deadpill(272, 256, 64, 22, "SAVE AS", CYAN)
+hdr("PRESETS", 206, 158, 120)
+panel(206, 170, 118, 20, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("User 1", 213, 173, 90, 13, TXT, 9, "Arial", 0)
+label("▼", 308, 173, 12, 13, TXT3, 8, "Arial", 1)
+deadpill(206, 196, 56, 20, "SAVE", CYAN)
+deadpill(268, 196, 56, 20, "SAVE AS", CYAN)
 
-hdr("DEVICE INFO", 204, 288, 160)
-label("MIDI Port", 204, 304, 80, 12, TXT3, 9, "Arial", 0)
-label("IAC Driver Bus 1", 280, 304, 124, 12, TXT2, 9, "Arial", 0)
-label("Firmware", 204, 320, 80, 12, TXT3, 9, "Arial", 0)
-label("1.23", 280, 320, 124, 12, CYAN, 9, "Arial", 0)
+hdr("DEVICE INFO", 206, 224, 160)
+label("MIDI Port", 206, 238, 70, 11, TXT3, 8, "Arial", 0)
+label("IAC Driver Bus 1", 278, 238, 118, 11, TXT2, 8, "Arial", 0)
+label("Firmware", 206, 252, 70, 11, TXT3, 8, "Arial", 0)
+label("1.23", 278, 252, 118, 11, CYAN, 8, "Arial", 0)
 
 # --- RIGHT: PRESET MANAGER ---
-hdr("PRESET MANAGER", 420, 58, 164)
-card(420,  76, 164, 52, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
-card(420, 136, 164, 52, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
-deadpill(420, 300, 164, 30, "MANAGE PRESETS", CYAN, filled=True)
+hdr("PRESET MANAGER", 410, 40, 172)
+card(410,  54, 172, 36, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+card(410,  96, 172, 36, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+deadpill(410, 180, 172, 26, "MANAGE PRESETS", CYAN, filled=True)
 
 # --- footer ---
-panel(16, 356, W - 32, 1, BTNBORD)
-label("Edit", 16, 366, 80, 14, TXT2, 10, "Arial", 0)
-label("⤴", W - 36, 364, 20, 18, TXT2, 13, "Arial", 1)
+panel(14, 264, W - 28, 1, BTNBORD)
+label("Edit", 14, 270, 80, 12, TXT2, 9, "Arial", 0)
+label("⤴", W - 30, 268, 16, 16, TXT2, 12, "Arial", 1)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
@@ -287,7 +288,7 @@ patcher = {"patcher": {
     "fileversion": 1,
     "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
     "classnamespace": "box",
-    "rect": [100.0, 100.0, 780.0, 640.0],
+    "rect": [100.0, 100.0, 596.0, 322.0],
     "openinpresentation": 1,
     "default_fontsize": 11.0, "default_fontname": "Arial",
     "gridsize": [8.0, 8.0],
