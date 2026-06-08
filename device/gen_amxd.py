@@ -151,34 +151,34 @@ def hdr(text, x, y, w):
 # manager, device-info, and send/request/receive cards are PLACEHOLDER visuals
 # (NOT wired). The real functional controls are created afterward with
 # presentation=0 (hidden but still fully connected), for a later wiring pass.
-W, H = 536, 166
+W, H = 516, 166
 panel(0, 0, W, H, BG, rounded=12, border=1, bordercolor=BTNBORD)        # window
 
 # --- header bar (tight gap to divider) ---
-label("✈", 14, 6, 16, 16, CYAN, 12, "Arial", 1)
-label("Sysex Vault", 32, 6, 200, 15, TXT, 12, "Arial Bold", 0)
-label("⟳    ⚙    ⤓", 400, 7, 122, 12, TXT3, 10, "Arial", 2)
-panel(14, 23, W - 28, 1, BTNBORD)                                      # header divider (close under title)
+label("✈", 12, 6, 16, 16, CYAN, 12, "Arial", 1)
+label("Sysex Vault", 30, 6, 200, 15, TXT, 12, "Arial Bold", 0)
+label("⟳    ⚙    ⤓", 384, 7, 120, 12, TXT3, 10, "Arial", 2)
+panel(12, 23, W - 24, 1, BTNBORD)                                      # header divider (close under title)
 
-# --- LEFT: QUICK ACTIONS ---
-hdr("QUICK ACTIONS", 14, 30, 178)
-card(14,  44, 178, 34, "✈", "SEND SYSEX",    "Send Message",  CYAN)
-card(14,  82, 178, 34, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
-card(14, 120, 178, 34, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
+# --- LEFT: QUICK ACTIONS  (margin 12) ---
+hdr("QUICK ACTIONS", 12, 30, 178)
+card(12,  44, 178, 34, "✈", "SEND SYSEX",    "Send Message",  CYAN)
+card(12,  82, 178, 34, "⬇", "REQUEST DATA",  "Send Request",  CYAN)
+card(12, 120, 178, 34, "⬆", "RECEIVE PATCH", "Receive Patch", VIOLET)
 
-# --- CENTER: PRESETS ---
-hdr("PRESETS", 208, 30, 120)
-panel(208, 42, 116, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
-label("User 1", 215, 44, 90, 13, TXT, 9, "Arial", 0)
-label("▼", 310, 44, 12, 13, TXT3, 8, "Arial", 1)
-deadpill(208, 64, 56, 16, "SAVE", CYAN)
-deadpill(268, 64, 56, 16, "SAVE AS", CYAN)
+# --- CENTER: PRESETS  (10px gap from left column) ---
+hdr("PRESETS", 200, 30, 120)
+panel(200, 42, 116, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
+label("User 1", 207, 44, 90, 13, TXT, 9, "Arial", 0)
+label("▼", 302, 44, 12, 13, TXT3, 8, "Arial", 1)
+deadpill(200, 64, 56, 16, "SAVE", CYAN)
+deadpill(260, 64, 56, 16, "SAVE AS", CYAN)
 
-# --- RIGHT: PRESET MANAGER (pulled left, snug to the presets column) ---
-hdr("PRESET MANAGER", 344, 30, 178)
-card(344, 44, 178, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
-card(344, 82, 178, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
-deadpill(344, 120, 178, 22, "MANAGE PRESETS", CYAN, filled=True)
+# --- RIGHT: PRESET MANAGER  (10px gap from presets column) ---
+hdr("PRESET MANAGER", 326, 30, 178)
+card(326, 44, 178, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+card(326, 82, 178, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+deadpill(326, 120, 178, 22, "MANAGE PRESETS", CYAN, filled=True)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
@@ -259,7 +259,7 @@ patcher = {"patcher": {
     "fileversion": 1,
     "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
     "classnamespace": "box",
-    "rect": [100.0, 100.0, 536.0, 200.0],
+    "rect": [100.0, 100.0, 516.0, 200.0],
     "openinpresentation": 1,
     "default_fontsize": 11.0, "default_fontname": "Arial",
     "gridsize": [8.0, 8.0],
