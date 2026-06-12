@@ -146,14 +146,36 @@ def deadpill(x, y, w, h, text, accent, filled=False):
 def hdr(text, x, y, w):
     label(text, x, y, w, 11, TXT3, 8, "Arial Bold", 0)
 
-def clickzone(oid, x, y, w, h, hover):
+def clickzone(oid, x, y, w, h, accent):
     # transparent momentary button that sits ON TOP of a card to make it clickable;
     # outputs a bang-ish 1/0 we trigger off of. Author AFTER the card so it draws on top.
+    # FEEDBACK: subtle accent tint on hover, STRONG accent flash while pressed so the
+    # click is unmistakable (the underlying card text still shows through the tint).
+    rgb = accent[:3]
+    hover = rgb + [0.16]
+    press = rgb + [0.60]
     add(base(oid, "textbutton", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
          "text": "", "fontsize": 8, "rounded": 8, "border": 0,
-         "bgcolor": [0, 0, 0, 0], "bgovercolor": hover, "bgoncolor": hover,
+         "bgcolor": [0, 0, 0, 0], "bgovercolor": hover, "bgoncolor": press,
          "textcolor": [0, 0, 0, 0], "textovercolor": [0, 0, 0, 0], "textoncolor": [0, 0, 0, 0]}))
+    return oid
+
+def pillbutton(oid, x, y, w, h, text, accent, filled=False, size=9):
+    # Real clickable pill (replaces the painted deadpill) so it FLASHES on click.
+    # Not necessarily wired yet — the visual press feedback is the point here.
+    if filled:                      # solid accent fill -> darken on press
+        bg, bgon = accent, [c * 0.65 for c in accent[:3]] + [1.0]
+        tc, tcon = BG, BG
+    else:                           # outlined -> fill with accent on press
+        bg, bgon = BTNBG, accent[:3] + [1.0]
+        tc, tcon = accent, BG
+    add(base(oid, "textbutton", x, y, w, h, True,
+        {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
+         "text": text, "fontsize": size, "fontname": "Arial Bold", "rounded": 6,
+         "bgcolor": bg, "bgovercolor": bgon, "bgoncolor": bgon,
+         "textcolor": tc, "textovercolor": tcon, "textoncolor": tcon,
+         "border": 1, "outlinecolor": accent}))
     return oid
 
 # ============================ PRESENTATION (the UI) ==========================
@@ -177,8 +199,8 @@ hdr("PRESETS", 12, 30, 106)
 panel(12, 42, 106, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
 label("User 1", 19, 44, 84, 13, TXT, 9, "Arial", 0)
 label("▼", 104, 44, 12, 13, TXT3, 8, "Arial", 1)
-deadpill(12, 64, 51, 16, "SAVE", CYAN)
-deadpill(67, 64, 51, 16, "SAVE AS", CYAN)
+pillbutton("bsave",   12, 64, 51, 16, "SAVE",    CYAN)
+pillbutton("bsaveas", 67, 64, 51, 16, "SAVE AS", CYAN)
 
 # --- RIGHT: PRESET MANAGER  (the two WORKING buttons) ---
 hdr("PRESET MANAGER", 128, 30, 126)
@@ -188,7 +210,7 @@ clickzone("sndbtn2", 128, 44, 126, 34, [0.125, 0.843, 1.0, 0.16])
 card(128, 82, 126, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
 # WIRED: Receive = arm the device to capture the next dump from the synth.
 clickzone("rcvbtn2", 128, 82, 126, 34, [0.604, 0.420, 1.0, 0.16])
-deadpill(128, 120, 126, 22, "MANAGE PRESETS", CYAN, filled=True)
+pillbutton("bmanage", 128, 120, 126, 22, "MANAGE PRESETS", CYAN, filled=True)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
