@@ -175,10 +175,13 @@ panel(12, 23, W - 24, 1, BTNBORD)                                      # header 
 # --- LEFT: QUICK ACTIONS  (margin 12, no icon -> hugs centered text) ---
 hdr("QUICK ACTIONS", 12, 30, 92)
 card(12,  44, 92, 34, "", "SEND SYSEX",    "Send Message",  CYAN)
-card(12,  82, 92, 34, "", "REQUEST DATA",  "Send Request",  CYAN)
+# WIRED: Send = transmit the last captured/imported patch downstream to the synth
+# (engine "transmitlast"). Overlay drawn after the card so it's clickable.
+clickzone("sndbtn", 12, 44, 92, 34, [0.125, 0.843, 1.0, 0.16])
+card(12,  82, 92, 34, "", "REQUEST DATA",  "Send Request",  CYAN)  # decorative (no dump-request handler yet)
 card(12, 120, 92, 34, "", "RECEIVE PATCH", "Receive Patch", VIOLET)
-# WIRED: Receive Patch = arm the device to capture the next dump from the synth
-# (same as the old ARM button). Overlay drawn after the card so it's clickable.
+# WIRED: Receive = arm the device to capture the next dump from the synth
+# (engine "arm"). Overlay drawn after the card so it's clickable.
 clickzone("rcvbtn", 12, 120, 92, 34, [0.604, 0.420, 1.0, 0.16])
 
 # --- CENTER: PRESETS  (10px gap from left column) ---
@@ -192,7 +195,9 @@ deadpill(169, 64, 51, 16, "SAVE AS", CYAN)
 # --- RIGHT: PRESET MANAGER  (10px gap from presets column, narrow cards) ---
 hdr("PRESET MANAGER", 230, 30, 126)
 card(230, 44, 126, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+clickzone("sndbtn2", 230, 44, 126, 34, [0.125, 0.843, 1.0, 0.16])   # WIRED: Send -> transmitlast
 card(230, 82, 126, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+clickzone("rcvbtn2", 230, 82, 126, 34, [0.604, 0.420, 1.0, 0.16])   # WIRED: Receive -> arm
 deadpill(230, 120, 126, 22, "MANAGE PRESETS", CYAN, filled=True)
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
@@ -258,7 +263,11 @@ line("mrescan", 0, "glue", 0)
 
 # UI -> node
 line(ARM, 0, "sarm", 0); line("sarm", 0, "marm", 0); line("marm", 0, "node", 0)
-line("rcvbtn", 0, "sarm", 0)         # WIRED: visible "Receive Patch" card -> arm chain
+# WIRED dashboard cards -> the SAME proven chains the hidden ARM/TEST buttons use:
+#   RECEIVE cards -> sarm("t b") -> "arm"          (capture next dump from synth)
+#   SEND    cards -> stst("t b") -> "transmitlast" (send last patch to synth)
+line("rcvbtn", 0, "sarm", 0); line("rcvbtn2", 0, "sarm", 0)
+line("sndbtn", 0, "stst", 0); line("sndbtn2", 0, "stst", 0)
 line(IMPORT, 0, "simp", 0); line("simp", 0, "odlg", 0); line("odlg", 0, "pimp", 0); line("pimp", 0, "node", 0)
 line(EXPORT, 0, "sexp", 0); line("sexp", 0, "sdlg", 0); line("sdlg", 0, "pexp", 0); line("pexp", 0, "node", 0)
 line(LIST, 0, "slst", 0); line("slst", 0, "mlst", 0); line("mlst", 0, "node", 0)
