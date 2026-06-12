@@ -156,7 +156,7 @@ def clickzone(oid, x, y, w, h, accent):
     press = rgb + [0.60]
     add(base(oid, "textbutton", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
-         "text": "", "fontsize": 8, "rounded": 8, "border": 0,
+         "text": "", "fontsize": 8, "rounded": 8, "border": 0, "blinktime": 220,
          "bgcolor": [0, 0, 0, 0], "bgovercolor": hover, "bgoncolor": press,
          "textcolor": [0, 0, 0, 0], "textovercolor": [0, 0, 0, 0], "textoncolor": [0, 0, 0, 0]}))
     return oid
@@ -173,6 +173,7 @@ def pillbutton(oid, x, y, w, h, text, accent, filled=False, size=9):
     add(base(oid, "textbutton", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
          "text": text, "fontsize": size, "fontname": "Arial Bold", "rounded": 6,
+         "blinktime": 220,
          "bgcolor": bg, "bgovercolor": bgon, "bgoncolor": bgon,
          "textcolor": tc, "textovercolor": tcon, "textoncolor": tcon,
          "border": 1, "outlinecolor": accent}))
