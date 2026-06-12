@@ -178,6 +178,23 @@ def pillbutton(oid, x, y, w, h, text, accent, filled=False, size=9):
          "border": 1, "outlinecolor": accent}))
     return oid
 
+def umenu(oid, x, y, w, h, pres=True):
+    # dynamic dropdown; items are pushed at runtime by the node engine
+    # ("clear"/"append <name>"). Outlet 0 = selected index (int).
+    add(base(oid, "umenu", x, y, w, h, pres,
+        {"numinlets": 1, "numoutlets": 3, "outlettype": ["int", "", ""],
+         "bgcolor": BTNBG, "textcolor": TXT, "fontsize": 9, "fontname": "Arial",
+         "arrowcolor": CYAN, "bordercolor": BTNBORD, "items": ""}))
+    return oid
+
+def textedit(oid, x, y, w, h, pres=True):
+    # single-line typed name field. A bang in -> outputs current text out outlet 0.
+    add(base(oid, "textedit", x, y, w, h, pres,
+        {"numinlets": 1, "numoutlets": 2, "outlettype": ["", "bang"],
+         "bgcolor": BTNBG, "textcolor": TXT, "fontsize": 9, "fontname": "Arial",
+         "bordercolor": BTNBORD, "text": ""}))
+    return oid
+
 # ============================ PRESENTATION (the UI) ==========================
 # Faithful reproduction of the "Sysex Control" dashboard mockup, COMPACTED to fit
 # the M4L device window height (~176px usable). Device Info moved into the right
@@ -194,13 +211,13 @@ label("Sysex Vault", 30, 6, 150, 15, TXT, 12, "Arial Bold", 0)
 label("⟳   ⚙   ⤓", W - 86, 7, 78, 12, TXT3, 10, "Arial", 2)
 panel(12, 23, W - 24, 1, BTNBORD)                                      # header divider (close under title)
 
-# --- LEFT: PRESETS ---
+# --- LEFT: PRESETS (dropdown recalls a saved dump; type a name + SAVE) ---
 hdr("PRESETS", 12, 30, 106)
-panel(12, 42, 106, 18, BTNBG, rounded=5, border=1, bordercolor=BTNBORD)
-label("User 1", 19, 44, 84, 13, TXT, 9, "Arial", 0)
-label("▼", 104, 44, 12, 13, TXT3, 8, "Arial", 1)
-pillbutton("bsave",   12, 64, 51, 16, "SAVE",    CYAN)
-pillbutton("bsaveas", 67, 64, 51, 16, "SAVE AS", CYAN)
+umenu("pmenu", 12, 42, 106, 18)                        # WIRED: select a saved preset
+label("NEW NAME", 12, 63, 106, 9, TXT3, 7, "Arial Bold", 0)
+textedit("pname", 12, 73, 106, 18)                     # WIRED: type a preset name
+pillbutton("bsave",   12, 95, 51, 16, "SAVE",    CYAN)  # WIRED: save last dump as typed name
+pillbutton("bsaveas", 67, 95, 51, 16, "SAVE AS", CYAN)  # WIRED: save as new (unique) name
 
 # --- RIGHT: PRESET MANAGER  (the two WORKING buttons) ---
 hdr("PRESET MANAGER", 128, 30, 126)
@@ -234,7 +251,7 @@ patch("node", "node.script sysex-device.js", 16, PY + 80, 180, 1, 2,
        "npm_bin_path": "", "watch": 1},
        "textfile": {"text": "", "filename": "sysex-device.js", "flags": 0,
                     "embed": 1, "autowatch": 1}})
-patch("rte", "route sysex status", 16, PY + 124, 130, 1, 3)
+patch("rte", "route sysex status menu", 16, PY + 124, 150, 1, 4)
 patch("mout", "midiout", 16, PY + 160, 60, 1, 0)                 # NO ARG = downstream
 patch("setp", "prepend set", 180, PY + 124, 80, 1, 1)
 patch("glue", "js liveglue.js", 16, PY + 200, 110, 1, 1,
@@ -256,6 +273,15 @@ pmsg("mlst", "list", 500, PY + 28, 50)
 patch("stst", "t b", 560, PY, 50, 1, 1)
 pmsg("mtst", "transmitlast", 560, PY + 28, 90)
 patch("pspd", "prepend speed", 182, PY + 36, 100, 1, 1)
+# --- presets glue (dropdown select / typed name / save / send-current) ---
+patch("psel", "prepend selectpreset", 16, PY + 236, 130, 1, 1)   # pmenu index -> node
+patch("pnm",  "prepend setname",      150, PY + 236, 110, 1, 1)  # textedit text -> node
+patch("tsave",   "t b b", 270, PY + 236, 50, 1, 2)               # SAVE: bang name THEN save
+pmsg("msave",    "savepreset",   270, PY + 268, 80)
+patch("tsaveas", "t b b", 360, PY + 236, 50, 1, 2)               # SAVE AS: bang name THEN save-as
+pmsg("msaveas",  "savepresetas", 360, PY + 268, 90)
+patch("ssend", "t b", 450, PY + 236, 50, 1, 1)                   # SEND PATCH -> transmit selected
+pmsg("msnd",   "sendcurrent", 450, PY + 268, 80)
 # debug message buttons (handy, hidden)
 pmsg("mss", "script start", 620, PY, 90)
 pmsg("mni", "script npm install", 620, PY + 28, 130)
@@ -268,18 +294,32 @@ line("node", 0, "rte", 0)
 line("rte", 0, "mout", 0)            # route(sysex)  -> midiout (downstream)
 line("rte", 1, "setp", 0)            # route(status) -> "set …"
 line("setp", 0, "statusLCD", 0)      # -> LCD comment
-line("rte", 2, "glue", 0)            # route(rest)   -> liveglue
+line("rte", 2, "pmenu", 0)           # route(menu)   -> dropdown (clear/append <name>)
+line("rte", 3, "glue", 0)            # route(rest)   -> liveglue
 line("glue", 0, "node", 0)           # liveglue -> node
 line("ltd", 0, "mrescan", 0)
 line("mrescan", 0, "glue", 0)
 
 # UI -> node
 line(ARM, 0, "sarm", 0); line("sarm", 0, "marm", 0); line("marm", 0, "node", 0)
-# WIRED dashboard buttons -> the SAME proven chains the hidden ARM/TEST buttons use:
-#   RECEIVE PATCH -> sarm("t b") -> "arm"          (capture next dump from synth)
-#   SEND PATCH    -> stst("t b") -> "transmitlast" (send last patch to synth)
+# WIRED dashboard buttons:
+#   RECEIVE PATCH -> sarm("t b") -> "arm"        (capture next dump from synth)
+#   SEND PATCH    -> ssend("t b") -> "sendcurrent" (transmit selected preset / last dump)
 line("rcvbtn2", 0, "sarm", 0)
-line("sndbtn2", 0, "stst", 0)
+line("sndbtn2", 0, "ssend", 0); line("ssend", 0, "msnd", 0); line("msnd", 0, "node", 0)
+
+# --- presets wiring ---
+# dropdown select -> set current preset (no send)
+line("pmenu", 0, "psel", 0); line("psel", 0, "node", 0)
+# typed name -> node (also fires on Enter / focus-out, keeping pendingName fresh)
+line("pname", 0, "pnm", 0); line("pnm", 0, "node", 0)
+# SAVE / SAVE AS: [t b b] fires RIGHT outlet first (bang the name field so its text
+# reaches node as "setname …"), THEN the LEFT outlet (the save message). FIFO into
+# node guarantees pendingName is set before the save runs.
+line("bsave", 0, "tsave", 0)
+line("tsave", 1, "pname", 0); line("tsave", 0, "msave", 0); line("msave", 0, "node", 0)
+line("bsaveas", 0, "tsaveas", 0)
+line("tsaveas", 1, "pname", 0); line("tsaveas", 0, "msaveas", 0); line("msaveas", 0, "node", 0)
 line(IMPORT, 0, "simp", 0); line("simp", 0, "odlg", 0); line("odlg", 0, "pimp", 0); line("pimp", 0, "node", 0)
 line(EXPORT, 0, "sexp", 0); line("sexp", 0, "sdlg", 0); line("sdlg", 0, "pexp", 0); line("pexp", 0, "node", 0)
 line(LIST, 0, "slst", 0); line("slst", 0, "mlst", 0); line("mlst", 0, "node", 0)

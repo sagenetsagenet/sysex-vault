@@ -20,6 +20,7 @@ const sysex = require("../src/sysex.js");
 const identity = require("../src/identity.js");
 const store = require("../src/store.js");
 const placement = require("../src/placement.js");
+const presets = require("../src/presets.js");
 
 const STORE_DIR = path.join(os.homedir(), "Music", "Ableton", "User Library", "Sysex Vault", "dumps");
 
@@ -27,6 +28,8 @@ let armed = false;
 let lastHash = null;        // most-recent dump (for the manual transmitlast button)
 let pendingPark = null;     // { hash, byteSize, base } awaiting liveglue's "bars" reply
 let rx = null;              // F0..F7 accumulation buffer
+let pendingName = "";       // last name typed in the dashboard text field (for SAVE/SAVE AS)
+let currentHash = null;     // preset selected in the dropdown (what SEND PATCH transmits)
 
 // ---- transmit speed (bytes/sec). Index from the UI live.tab. ---------------
 // 3125 B/s = full standard-MIDI bandwidth (31.25 kbaud / 10 bits per byte).
@@ -169,6 +172,48 @@ Max.addHandler("transmitlast", () => {
   if (!lastHash) return Max.post("[sysex] transmitlast: nothing captured yet");
   onLaunch(`x [sx:00000000:${lastHash}]`);
 });
+
+// ---- presets: a preset = a saved dump, recalled by name --------------------
+// Repopulate the dashboard dropdown ([umenu]) from the on-disk preset index.
+// "menu clear" / "menu append <name>" -> [route menu] -> [umenu].
+function pushMenu() {
+  Max.outlet("menu", "clear");
+  presets.names(STORE_DIR).forEach((n) => Max.outlet("menu", "append", n));
+}
+// the dashboard text field reports what's typed; SAVE/SAVE AS consume it.
+Max.addHandler("setname", (...parts) => { pendingName = parts.join(" ").trim(); });
+// SAVE: store the last captured/imported dump under the typed name (upsert).
+Max.addHandler("savepreset", () => {
+  if (!lastHash) { Max.post("[sysex] save: nothing captured yet"); return status("NO BUFFER"); }
+  if (!pendingName) { Max.post("[sysex] save: type a name first"); return status("NAME?"); }
+  presets.add(STORE_DIR, pendingName, lastHash);
+  pushMenu();
+  Max.post(`[sysex] saved preset "${pendingName}" -> ${lastHash}`);
+  status("SAVED " + pendingName);
+});
+// SAVE AS: like SAVE but never overwrite — collisions get " 2", " 3", ...
+Max.addHandler("savepresetas", () => {
+  if (!lastHash) { Max.post("[sysex] save as: nothing captured yet"); return status("NO BUFFER"); }
+  if (!pendingName) { Max.post("[sysex] save as: type a name first"); return status("NAME?"); }
+  const r = presets.addAs(STORE_DIR, pendingName, lastHash);
+  pushMenu();
+  Max.post(`[sysex] saved preset as "${r.name}" -> ${lastHash}`);
+  status("SAVED " + r.name);
+});
+// dropdown select: set the current preset (SEND PATCH transmits this). No send here.
+Max.addHandler("selectpreset", (idx) => {
+  const e = presets.entryAt(STORE_DIR, idx | 0);
+  if (!e) { currentHash = null; return; }
+  currentHash = e.hash;
+  Max.post(`[sysex] selected preset "${e.name}" (${e.hash})`);
+  status("SEL " + e.name);
+});
+// SEND PATCH: transmit the selected preset, falling back to the last dump.
+Max.addHandler("sendcurrent", () => {
+  const hash = currentHash || lastHash;
+  if (!hash) { Max.post("[sysex] send: no preset selected and nothing captured"); return status("NO PRESET"); }
+  onLaunch(`x [sx:00000000:${hash}]`);
+});
 Max.addHandler("list", () => {
   const rows = store.list(STORE_DIR).map((h) => {
     const bytes = store.get(STORE_DIR, h);
@@ -204,5 +249,6 @@ Max.addHandler("reconcile", async () => {
 
 store.ensureDir(STORE_DIR);
 const nDumps = store.list(STORE_DIR).length;
-Max.post(`[sysex] device ready — store ${STORE_DIR} (${nDumps} dump(s))`);
+pushMenu();                                       // fill the dropdown from saved presets
+Max.post(`[sysex] device ready — store ${STORE_DIR} (${nDumps} dump(s), ${presets.names(STORE_DIR).length} preset(s))`);
 status("READY " + nDumps);
