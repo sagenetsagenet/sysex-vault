@@ -152,13 +152,24 @@ def clickzone(oid, x, y, w, h, accent):
     # FEEDBACK: subtle accent tint on hover, STRONG accent flash while pressed so the
     # click is unmistakable (the underlying card text still shows through the tint).
     rgb = accent[:3]
-    hover = rgb + [0.16]
-    press = rgb + [0.60]
+    hover = rgb + [0.22]
+    press = rgb + [0.85]      # near-opaque flash while held — unmistakable click feedback
     add(base(oid, "textbutton", x, y, w, h, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": [""],
          "text": "", "fontsize": 8, "rounded": 8, "border": 0, "blinktime": 220,
          "bgcolor": [0, 0, 0, 0], "bgovercolor": hover, "bgoncolor": press,
          "textcolor": [0, 0, 0, 0], "textovercolor": [0, 0, 0, 0], "textoncolor": [0, 0, 0, 0]}))
+    return oid
+
+def flashled(oid, x, y, sz, accent):
+    # A real [button] (bang) — UNLIKE textbutton, [button] honours `blinktime`
+    # and reliably FLASHES `blinkcolor` for blinktime ms on every bang. We bang it
+    # from the clickzone so each card click produces an unmistakable light-up.
+    # Idle = a faint hollow ring; on click = a bright filled accent dot.
+    add(base(oid, "button", x, y, sz, sz, True,
+        {"numinlets": 1, "numoutlets": 1, "outlettype": ["bang"],
+         "blinktime": 260, "bgcolor": [0, 0, 0, 0],
+         "blinkcolor": accent[:3] + [1.0], "outlinecolor": accent[:3] + [0.45]}))
     return oid
 
 def pillbutton(oid, x, y, w, h, text, accent, filled=False, size=9):
@@ -222,13 +233,24 @@ pillbutton("bsaveas", 67, 95, 51, 16, "SAVE AS", CYAN)  # WIRED: save as new (un
 
 # --- RIGHT: PRESET MANAGER  (the two WORKING buttons) ---
 hdr("PRESET MANAGER", 128, 30, 126)
-card(128, 44, 126, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN, star=True)
+card(128, 44, 126, 34, "⬆", "SEND PATCH",    "Send Patch to Device", CYAN)
 # WIRED: Send = transmit the last captured/imported patch downstream to the synth.
-clickzone("sndbtn2", 128, 44, 126, 34, [0.125, 0.843, 1.0, 0.16])
-card(128, 82, 126, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET, star=True)
+clickzone("sndbtn2", 128, 44, 126, 34, CYAN)
+flashled("ledSnd", 234, 54, 14, CYAN)          # flashes on every SEND click
+card(128, 82, 126, 34, "⬇", "RECEIVE PATCH", "Receive from Device",  VIOLET)
 # WIRED: Receive = arm the device to capture the next dump from the synth.
-clickzone("rcvbtn2", 128, 82, 126, 34, [0.604, 0.420, 1.0, 0.16])
-pillbutton("bmanage", 128, 120, 126, 22, "MANAGE PRESETS", CYAN, filled=True)
+clickzone("rcvbtn2", 128, 82, 126, 34, VIOLET)
+flashled("ledRcv", 234, 92, 14, VIOLET)        # flashes on every RECEIVE click
+pillbutton("bmanage", 128, 120, 126, 18, "MANAGE PRESETS", CYAN, filled=True)
+
+# --- STATUS BAR (VISIBLE): the device's live activity readout. The node engine
+#     drives this on every action: ○ READY / ◀ ARMED / ◀ incoming… / ✓ RX <name>
+#     / ▶ sending… / ✓ sent. This is the on-screen indication of data in/out. ---
+panel(12, 144, W - 24, 18, LCDBG, rounded=6, border=1, bordercolor=BTNBORD)   # LCD bezel
+add(base("statusLCD", "comment", 17, 147, W - 34, 13, True,
+    {"numinlets": 1, "numoutlets": 0,
+     "text": "○ READY", "textcolor": CYAN, "fontsize": 10,
+     "fontname": "Courier New", "textjustification": 0}))
 
 # --- REAL functional controls: kept WIRED, hidden from presentation for now ---
 # (presentation=0 — they remain in the patch and stay connected to the engine.)
@@ -238,10 +260,6 @@ EXPORT = tbutton("EXPORT", 680, 178, 90, 22, BTNBG, BTNON, TXT, CYAN,   bord=BTN
 LIST   = tbutton("LIST",   680, 206, 90, 22, BTNBG, BTNON, TXT, CYAN,   bord=BTNBORD, pres=False)
 TEST   = tbutton("TEST ▶", 680, 234, 90, 22, BTNBG, BTNON, TXT, VIOLET, bord=BTNBORD, pres=False)
 SPEED  = livetab(680, 262, 200, 24, ["VINTAGE", "STANDARD", "FAST", "TURBO"], 1, pres=False)
-add(base("statusLCD", "comment", 680, 292, 200, 16, False,
-    {"numinlets": 1, "numoutlets": 0,
-     "text": "> READY", "textcolor": CYAN, "fontsize": 11,
-     "fontname": "Courier New", "textjustification": 0}))
 
 # ============================ PATCHING (hidden) =============================
 PY = 230
@@ -308,6 +326,9 @@ line(ARM, 0, "sarm", 0); line("sarm", 0, "marm", 0); line("marm", 0, "node", 0)
 #   SEND PATCH    -> ssend("t b") -> "sendcurrent" (transmit selected preset / last dump)
 line("rcvbtn2", 0, "sarm", 0)
 line("sndbtn2", 0, "ssend", 0); line("ssend", 0, "msnd", 0); line("msnd", 0, "node", 0)
+# fan each card's click bang to its LED so the press FLASHES (reliable [button] blink)
+line("rcvbtn2", 0, "ledRcv", 0)
+line("sndbtn2", 0, "ledSnd", 0)
 
 # --- presets wiring ---
 # dropdown select -> set current preset (no send)

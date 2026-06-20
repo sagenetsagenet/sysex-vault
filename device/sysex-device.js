@@ -21,13 +21,14 @@ const identity = require("../src/identity.js");
 const store = require("../src/store.js");
 const placement = require("../src/placement.js");
 const presets = require("../src/presets.js");
+const receiver = require("../src/receiver.js");
 
 const STORE_DIR = path.join(os.homedir(), "Music", "Ableton", "User Library", "Sysex Vault", "dumps");
 
 let armed = false;
 let lastHash = null;        // most-recent dump (for the manual transmitlast button)
 let pendingPark = null;     // { hash, byteSize, base } awaiting liveglue's "bars" reply
-let rx = null;              // F0..F7 accumulation buffer
+let rx = receiver.create(); // robust F0..F7 receive buffer (cleared on every RECEIVE/arm)
 let pendingName = "";       // last name typed in the dashboard text field (for SAVE/SAVE AS)
 let currentHash = null;     // preset selected in the dropdown (what SEND PATCH transmits)
 
@@ -58,25 +59,24 @@ function splitMessages(bytes) {
 function sendThrottled(bytes) {
   const msgs = splitMessages(bytes);
   if (!msgs.length) return;
+  status("TX ▶ sending…");                 // outgoing indicator (▶ sending…)
   let i = 0;
   (function next() {
     const m = msgs[i++];
     Max.outlet("sysex", ...m);                   // one complete F0..F7 -> [route] -> [midiout]
     if (i < msgs.length) setTimeout(next, Math.max(1, (m.length / txRate) * 1000));
+    else status("TX ✓ sent " + (bytes.length) + "b");   // ✓ done
   })();
 }
 
 // ---- capture ---------------------------------------------------------------
+// Feed each incoming byte through the robust receiver. The buffer self-clears on
+// F0 and is force-cleared by arm(), so a second patch always lands cleanly.
 function onByte(b) {
-  b = b & 0xff;
-  if (b === 0xf0) { rx = [0xf0]; return; }
-  if (rx === null) rx = [];                                  // tolerate missing leading F0
-  rx.push(b);
-  if (b === 0xf7) {
-    let bytes = rx; rx = null;
-    if (bytes[0] !== 0xf0) bytes = [0xf0].concat(bytes);
-    finishReceive(bytes);
-  }
+  const wasEmpty = receiver.pending(rx) === 0;
+  const msg = receiver.feed(rx, b);
+  if (wasEmpty && receiver.pending(rx) > 0) status("RX ◀ incoming…");  // ◀ data arriving
+  if (msg) finishReceive(msg);
 }
 
 // Kick off the park flow: ask liveglue for set-wide bars; onBars makes the clip.
@@ -91,10 +91,15 @@ function finishReceive(bytes) {
   const r = store.put(STORE_DIR, bytes);
   lastHash = r.hash;
   Max.post(`[sysex] received ${bytes.length} bytes — ${info.manufacturerShort} ${info.patchName || ""} -> dump ${r.hash}${r.deduped ? " (dedupe)" : ""}`);
-  status("RX " + (info.patchName || info.manufacturerShort || r.hash));
+  const label = info.patchName || info.manufacturerShort || r.hash;
   if (armed) {                                                 // received dumps only park when armed
     armed = false;
+    receiver.reset(rx);                                        // drop any trailing bytes; ready for next
+    status("RX ✓ " + label);                                  // ✓ captured + parking
     park(r.hash, bytes.length, info.patchName || info.manufacturerShort);
+  } else {
+    // captured but not armed — stored to the buffer; prompt to RECEIVE for the next one
+    status("RX " + label + " — tap RECEIVE");
   }
 }
 
@@ -126,8 +131,16 @@ function onLaunch(...parts) {
 Max.addHandler("byte", onByte);
 Max.addHandler("bars", onBars);
 Max.addHandler("launch", onLaunch);
-Max.addHandler("arm", () => { armed = true; rx = null; Max.post("[sysex] ARMED — send a dump from the synth"); status("ARMED"); });
-Max.addHandler("disarm", () => { armed = false; Max.post("[sysex] disarmed"); status("IDLE"); });
+// RECEIVE / ARM: fully clear the receive buffer + any stuck in-flight park, then arm.
+// This is the "click RECEIVE clears the buffer for the next patch" guarantee.
+Max.addHandler("arm", () => {
+  armed = true;
+  receiver.reset(rx);          // empty the buffer so the next dump starts clean
+  pendingPark = null;          // abandon any half-finished park so it can't wedge re-arm
+  Max.post("[sysex] ARMED — send a dump from the synth");
+  status("◀ ARMED — send patch");
+});
+Max.addHandler("disarm", () => { armed = false; receiver.reset(rx); Max.post("[sysex] disarmed"); status("○ IDLE"); });
 Max.addHandler("speed", (idx) => {
   txRate = TX_RATES[idx | 0] || 3125;
   Max.post(`[sysex] tx speed = ${txRate} B/s`);
@@ -251,4 +264,4 @@ store.ensureDir(STORE_DIR);
 const nDumps = store.list(STORE_DIR).length;
 pushMenu();                                       // fill the dropdown from saved presets
 Max.post(`[sysex] device ready — store ${STORE_DIR} (${nDumps} dump(s), ${presets.names(STORE_DIR).length} preset(s))`);
-status("READY " + nDumps);
+status("○ READY · " + nDumps + " dumps");
