@@ -168,7 +168,7 @@ def flashled(oid, x, y, sz, accent):
     # Idle = a faint hollow ring; on click = a bright filled accent dot.
     add(base(oid, "button", x, y, sz, sz, True,
         {"numinlets": 1, "numoutlets": 1, "outlettype": ["bang"],
-         "blinktime": 260, "bgcolor": [0, 0, 0, 0],
+         "blinktime": 260, "bgcolor": [0, 0, 0, 0], "ignoreclick": 1,  # display-only: never steal a card click
          "blinkcolor": accent[:3] + [1.0], "outlinecolor": accent[:3] + [0.45]}))
     return oid
 
